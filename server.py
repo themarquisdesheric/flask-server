@@ -1,16 +1,26 @@
-from flask import Flask
+from flask import Flask, render_template, request
 from vsearch import search4letters
 
 app = Flask(__name__)
 
 
 @app.route('/')
-def index() -> str:
-    return 'Home page'
+def entry_page() -> 'html':
+    return render_template('entry.html',
+                            the_title="Welcome to search4letters on the Web!")
 
 
-@app.route('/search4')
-def do_search() -> str:
-    return str(search4letters('life, the universe, and everything', 'eury,!'))
+@app.route('/search4', methods=['POST'])
+def do_search() -> 'html':
+    phrase = request.form['phrase']
+    letters = request.form['letters']
+    results = str(search4letters(phrase, letters))
 
-app.run()
+    return render_template('results.html',
+                            the_title="Here are your results:",
+                            the_phrase=phrase,
+                            the_letters=letters,
+                            the_results=results)
+
+
+app.run(debug=True)
