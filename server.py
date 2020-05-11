@@ -23,4 +23,6 @@ def do_search() -> 'html':
                             the_results=results)
 
 
-app.run(debug=True)
+# don't call if module is imported (like a cloud provider) as they will call app.run()
+if __name__ == '__main__':
+    app.run(debug=True)
