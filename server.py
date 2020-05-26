@@ -4,7 +4,7 @@ from DBcm import UseDatabase
 
 app = Flask(__name__)
 
-dbconfig = { 'host': '127.0.0.1',
+app.config['dbconfig'] = { 'host': '127.0.0.1',
              'user': 'vsearch',
              'password': 'vsearchpasswd',
              'database': 'vsearchlogDB', }
@@ -17,15 +17,19 @@ def entry_page() -> 'html':
 
 
 @app.route('/viewlog')
-def view_log() -> str:
-    contents = []
+def view_log() -> 'html':
+    with UseDatabase(app.config['dbconfig']) as cursor:
+        _SQL = """select phrase, letters, ip, browser_string, results
+                  from log"""        
+        cursor.execute(_SQL)
+        contents = cursor.fetchall()
+        titles = ('Phrase', 'Letters', 'Remote_addr', 'User_agent', 'Results')
 
-    with open('vsearch.log') as log:
-        for line in log:
-            new_line =  escape(line).split('|')
-            contents.append(new_line)
+        return render_template('viewlog.html',
+                                the_title='View Log',
+                                the_row_titles=titles,
+                                the_data=contents,)
 
-    return str(contents)
 
 @app.route('/search4', methods=['POST'])
 def do_search() -> 'html':
@@ -48,7 +52,7 @@ def log_request(req: 'flask_request', res: str) -> None:
               values
               (%s, %s, %s, %s, %s)"""
 
-    with UseDatabase(dbconfig) as cursor:
+    with UseDatabase(app.config['dbconfig']) as cursor:
         cursor.execute(_SQL, (req.form['phrase'],
                               req.form['letters'],
                               req.remote_addr,
